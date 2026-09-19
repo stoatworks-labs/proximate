@@ -126,3 +126,26 @@ target_compile_definitions(proxhost PRIVATE
 target_link_libraries(proxhost
     PRIVATE juce::juce_audio_processors juce::juce_audio_formats juce::juce_audio_utils
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
+
+# The frame renderer for the demo video: the plugin's own editor painted over a file,
+# offline. It links the plugin's sources directly — a hosted editor is a foreign native
+# view proxhost's JUCE cannot paint — so the same defines the plugin builds with are set
+# here by hand, minimally.
+juce_add_console_app(proxrender PRODUCT_NAME "proxrender")
+target_sources(proxrender PRIVATE
+    tools/proxrender.cpp
+    ${PROXIMATE_CORE_SOURCES}
+    Source/PluginProcessor.cpp
+    Source/PluginEditor.cpp
+    Source/PluginParameters.cpp
+)
+target_compile_definitions(proxrender PRIVATE
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_STANDALONE_APPLICATION=1
+    JUCE_MODAL_LOOPS_PERMITTED=1
+    JucePlugin_VersionString="${PROJECT_VERSION}"
+)
+target_link_libraries(proxrender
+    PRIVATE juce::juce_audio_processors juce::juce_audio_formats juce::juce_audio_utils
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)

@@ -53,8 +53,13 @@ tests/test_compensator.cpp  85 checks, no JUCE
 tools/proxstat.cpp          A file through the bare compensator, with statistics and a trace
 tools/proxhost.cpp          A file through the BUILT plugin, via JUCE hosting; --show opens
                             the editor and streams in real time
+web/                        The browser demo: wasm/proximate_web.cpp wraps the unmodified
+                            DSP (plus a proximity simulator the plugin does not have),
+                            public/ is the deployed Worker (the built module is committed),
+                            test/harness.mjs pins wasm against native. See web/README.md.
 scripts/release-lib.sh      VENDORED from stoatworks-backend/release — never edit here
 .github/workflows/release.yml   Builds all platforms; see §5
+.github/workflows/deploy.yml    Deploys web/public on a push to main that touches web/
 docs/USER-GUIDE.md          The only copy of the guide anyone edits; the site page and the
                             PDF derive from it
 ```
@@ -155,6 +160,13 @@ ad-hoc signed; the fleet's autosign agent on the author's Mac re-signs and notar
 after the release is published. The About window's facts (`StoatworksAbout.h`) come from
 the website's `projects.json` via sync-about; a changed guide URL is edited there, then
 synced.
+
+The browser demo at `proximate-demo.stoatworks-labs.com` is deployed from `web/public`
+by `deploy.yml` on a push to main that touches `web/`; the wasm module is committed, so a
+DSP change needs `web/wasm/build.sh` re-run and the result committed, or the demo keeps
+running the old code while the harness in CI fails the deploy (it pins the module against
+a native build of the current sources — that is the point of it). `deploy.yml` needs
+`CLOUDFLARE_API_TOKEN` (secret) and `CLOUDFLARE_ACCOUNT_ID` (variable) on the repo.
 
 ## 6. Verifying a change
 

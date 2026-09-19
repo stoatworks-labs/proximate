@@ -75,6 +75,15 @@ It opens no audio input on its first run (AGENTS.md §4.4); pick the microphone 
 Options > Audio Settings and untick *Mute audio input*. Its settings live in
 `~/Library/Application Support/Proximate.settings`.
 
+## The browser demo
+
+```bash
+web/wasm/build.sh            # rebuild public/proximate.js after any DSP change (needs emcc)
+node web/test/harness.mjs    # pins the wasm module against a native clang++ build; must pass
+```
+
+A push to main that touches `web/` deploys it to proximate-demo.stoatworks-labs.com.
+
 ## Rules
 
 - Never add a gain path above unity, never add look-ahead, never expose the tuning as

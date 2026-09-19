@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proximate — Web Demo</title>
+<meta name="description" content="Try Proximate in the browser: the plugin's own proximity-effect compensator compiled to WebAssembly. Lean a simulated microphone in, or use your own, and hear the low end held in place.">
+<style>
+  :root {
+    --bg: #0d0f12;
+    --panel: #14161a;
+    --panel2: #1b1e24;
+    --border: #23272e;
+    --text: #d4d8de;
+    --dim: #8b929e;
+    --accent: #45b0e8;
+    --warn: #e0a03a;
+    --danger: #ff5d5d;
+    --track: #23272e;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font: 13px/1.45 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  #app { max-width: 1180px; margin: 0 auto; padding: 14px 16px 40px;
+    -webkit-user-select: none; user-select: none; }
+  footer { -webkit-user-select: text; user-select: text; }
+
+  header { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }
+  header h1 { font-size: 20px; margin: 0; letter-spacing: 0.5px; }
+  header .sub { color: var(--dim); }
+  header a { color: var(--accent); text-decoration: none; }
+  header .spacer { flex: 1; }
+
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+
+  #transport { margin-bottom: 10px; }
+  #playBtn { min-width: 88px; font-size: 14px; font-weight: 600; padding: 8px 14px;
+    background: var(--accent); color: #06121a; border: none; border-radius: 6px; cursor: pointer; }
+  #playBtn.playing { background: var(--danger); color: #fff; }
+  #playBtn:disabled { opacity: 0.6; cursor: default; }
+  select, button.small { background: var(--panel2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 5px; padding: 5px 8px; font-size: 12.5px; }
+  label.inline { display: inline-flex; gap: 6px; align-items: center; color: var(--dim); white-space: nowrap; }
+  input[type=range] { accent-color: var(--accent); }
+  input[type=checkbox] { accent-color: var(--accent); }
+  .val { color: var(--text); min-width: 58px; display: inline-block; text-align: right;
+    font-variant-numeric: tabular-nums; }
+  #micNote { color: var(--warn); display: none; }
+  #micNote.show { display: inline; }
+
+  #main { display: grid; grid-template-columns: 1fr 340px; gap: 10px; align-items: stretch; }
+  @media (max-width: 900px) { #main { grid-template-columns: 1fr; } }
+
+  /* --- the microphone --- */
+  #simPanel h2, #pluginPanel h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--dim); margin: 0 0 8px; font-weight: 600; }
+  #distRow { display: grid; grid-template-columns: 70px 1fr 150px; gap: 10px; align-items: center; }
+  #distRow input[type=range] { width: 100%; }
+  #distRead { font-variant-numeric: tabular-nums; }
+  #distRead b { font-size: 18px; font-weight: 600; }
+  #distRead small { color: var(--dim); display: block; }
+  #simRow { margin-top: 6px; color: var(--dim); }
+  .note { color: var(--dim); font-size: 11px; margin: 8px 0 0; }
+
+  #spectrumWrap { position: relative; margin-top: 10px; }
+  #spectrum { width: 100%; height: 300px; display: block; background: #0a0c0f;
+    border: 1px solid var(--border); border-radius: 8px; }
+  #spectrumLegend { position: absolute; right: 10px; top: 8px; color: var(--dim); font-size: 11px;
+    text-align: right; pointer-events: none; line-height: 1.5; }
+
+  /* --- the plugin face, laid out like the plugin's editor --- */
+  #pluginPanel { display: flex; flex-direction: column; gap: 4px; }
+  #pluginHead { display: flex; align-items: baseline; justify-content: space-between; }
+  #pluginHead .name { font-size: 18px; font-weight: 700; }
+  #pluginHead .tag { color: var(--dim); font-size: 11px; }
+  #knob { display: block; margin: 4px auto 0; width: 190px; height: 190px; cursor: ns-resize; touch-action: none; }
+  #amountRead { text-align: center; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  #amountCap { text-align: center; color: var(--dim); font-size: 12px; margin-bottom: 8px; }
+  .meterRow { display: flex; justify-content: space-between; align-items: baseline; font-size: 11px; color: var(--dim); }
+  .meterRow b { color: var(--text); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .meterRow b.dim { color: var(--dim); }
+  canvas.meter { display: block; width: 100%; height: 30px; }
+  #status { font-size: 11px; color: var(--dim); margin-top: 4px; min-height: 16px; }
+  #status.live { color: var(--accent); }
+  #abBtn { width: 100%; margin-top: 10px; padding: 8px 0; font-size: 13px; font-weight: 600; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--panel2); color: var(--dim); cursor: pointer; }
+  #abBtn.on { background: rgba(69,176,232,0.15); border-color: var(--accent); color: var(--accent); }
+  .peaks { display: flex; gap: 14px; justify-content: center; margin-top: 8px; }
+  .peak { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .peak canvas { background: #0a0c0f; border: 1px solid var(--border); border-radius: 4px; }
+  .peak .lbl { color: var(--dim); font-size: 11px; }
+
+  footer { margin-top: 26px; color: var(--dim); font-size: 12px; line-height: 1.6; }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Proximate</h1>
+    <span class="sub">web demo — the plugin’s own compensator, compiled to WebAssembly · a synthesised voice, your microphone, or a file</span>
+    <span class="spacer"></span>
+    <a href="https://stoatworks-labs.com/software/proximate/" target="_blank" rel="noopener">Project page ↗</a>
+    <a href="https://github.com/stoatworks-labs/proximate" target="_blank" rel="noopener">GitHub ↗</a>
+  </header>
+
+  <div id="transport" class="panel row">
+    <button id="playBtn">▶ Play</button>
+    <label class="inline">Source
+      <select id="sourceSel">
+        <option value="voiceLow">Synthesised voice — low</option>
+        <option value="voiceHigh">Synthesised voice — high</option>
+        <option value="mic">Microphone</option>
+        <option value="file">Uploaded file…</option>
+      </select>
+    </label>
+    <input type="file" id="fileInput" accept="audio/*" style="display:none">
+    <label class="inline">Trim
+      <input type="range" id="trim" min="-24" max="6" step="0.5" value="-12" style="width:110px">
+      <span class="val" id="trimVal">-12.0 dB</span>
+    </label>
+    <label class="inline" title="Web-only hard ceiling at -0.1 dBFS after the whole chain. The plugin has no such stage; the simulated proximity rise can add 17 dB of low end, and this protects your ears and speakers.">
+      <input type="checkbox" id="safetyClip" checked> Safety clip
+    </label>
+    <span id="micNote">Headphones on — a microphone into the speakers is a feedback loop, plugin or no plugin.</span>
+  </div>
+
+  <div id="main">
+    <div>
+      <div id="simPanel" class="panel">
+        <h2>The microphone</h2>
+        <div id="distRow">
+          <label for="distance" style="color:var(--dim)">Distance</label>
+          <input type="range" id="distance" min="0" max="1" step="0.001" value="0.34">
+          <div id="distRead"><b id="distVal">10 cm</b><small id="distDb">+7 dB at 100 Hz</small></div>
+        </div>
+        <div id="simRow" class="row">
+          <label class="inline" title="Puts a handheld dynamic's near-field rise on the source before Proximate sees it: a zero at c/(2r) over a pole at 90 Hz, flat beyond 30 cm, capped at +18 dB. Not part of the plugin.">
+            <input type="checkbox" id="simOn" checked> Simulate the proximity effect
+          </label>
+          <span class="note" style="margin:0">Drag the talker in and out. Proximate only ever sees the audio, never this slider.</span>
+        </div>
+        <div id="spectrumWrap">
+          <canvas id="spectrum"></canvas>
+          <div id="spectrumLegend">
+            <span style="color:#5a6470">■ into Proximate</span> · <span style="color:#45b0e8">■ out of it</span><br>
+            <span style="color:#e0a03a">— the shelf it is applying</span> · <span style="color:#7a5a2a">— the simulated rise</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="pluginPanel" class="panel">
+      <div id="pluginHead"><span class="name">Proximate</span><span class="tag">proximity effect compensation</span></div>
+      <canvas id="knob" width="380" height="380"></canvas>
+      <div id="amountRead">50 %</div>
+      <div id="amountCap">Amount</div>
+
+      <div class="meterRow"><span>Balance, low over high</span><b id="balanceRead" class="dim">0.0 dB</b></div>
+      <canvas id="balanceMeter" class="meter" width="640" height="60"></canvas>
+      <div class="meterRow"><span>Cut</span><b id="cutRead" class="dim">0.0 dB</b></div>
+      <canvas id="cutMeter" class="meter" width="640" height="60"></canvas>
+      <div id="status">Press Play.</div>
+
+      <button id="abBtn" class="on">Proximate ON — click for before</button>
+      <div class="peaks">
+        <div class="peak"><canvas id="inMeter" width="26" height="70"></canvas><span class="lbl">IN</span></div>
+        <div class="peak"><canvas id="outMeter" width="26" height="70"></canvas><span class="lbl">OUT</span></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>This demo runs the actual DSP from the
+      <a href="https://github.com/stoatworks-labs/proximate" target="_blank" rel="noopener">Proximate plugin</a>
+      — the balance detector, the gain computer and the first-order shelf in <code>Source/DSP/Compensator.cpp</code> —
+      compiled unmodified to WebAssembly and running in an AudioWorklet. The knob, the meters and the ceiling are the
+      plugin’s; the readouts come from the same code the plugin’s editor reads.</p>
+    <p>What you’re hearing: a directional microphone picks up more bass the closer the source is. The <b>Distance</b>
+      slider stands in for that — it puts a handheld dynamic’s near-field rise on the source before Proximate hears it,
+      and Proximate only ever hears the audio. Drag the talker in and the low end swells; with Proximate on, the balance
+      is held under the ceiling and the shelf takes the swell off. The <b>before</b> button hears the microphone as it
+      would be without the plugin. Nothing here boosts anything, and the plugin adds no latency.</p>
+    <p>The synthesised voices are built in your browser — a pulse train through three vowel formants, no recordings, no
+      third-party media. Your microphone and any file you load never leave the page. The “safety clip” output stage is
+      web-only. Parts of this project were built with AI assistance; the DSP core is verified against a native build of
+      the plugin’s own sources. © Stoatworks Labs, MIT.</p>
+  </footer>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

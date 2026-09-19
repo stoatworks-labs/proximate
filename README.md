@@ -24,6 +24,15 @@ the status line Listening.](docs/screenshots/plugin.png)
 balance reads +5.2 dB against a ceiling of −1 dB and the shelf is taking 10.5 dB off. The plugin is running
 inside a host, on real audio; only the window it is drawn in is a test harness.*
 
+**[Try it in your browser](https://proximate-demo.stoatworks-labs.com)** — the plugin's own
+DSP compiled to WebAssembly, with a Distance slider that stands in for a microphone's
+proximity effect, two synthesised voices, your microphone or a file. Audio never leaves the
+page. See [`web/`](web/README.md) for how the demo relates to the real thing.
+
+![The browser demo: a Distance slider at 6 cm over a spectrum plot of the voice going into
+Proximate and coming out of it with the low end taken down, and beside it the plugin's own
+knob, balance meter and cut meter reading −8.2 dB.](docs/screenshots/demo.png)
+
 ## The idea
 
 A directional microphone picks up more bass the closer the source is — a handheld dynamic

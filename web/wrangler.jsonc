@@ -1,0 +1,12 @@
+// Proximate web demo — static-assets-only Worker.
+// Deploy from web/: cf-run npx wrangler deploy   (CI does the same on a push to main)
+{
+  "name": "proximate-demo",
+  "compatibility_date": "2026-09-19",
+  "assets": {
+    "directory": "./public"
+  },
+  "routes": [
+    { "pattern": "proximate-demo.stoatworks-labs.com", "custom_domain": true }
+  ]
+}

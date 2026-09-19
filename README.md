@@ -10,6 +10,10 @@
 
 One knob against the proximity effect. VST3, AU and standalone, built with JUCE.
 
+**Video:** [What it does, in 44 seconds](https://www.youtube.com/watch?v=VNhoTlwiVx4) —
+the real editor over a presenter who leans in and steps back, rendered from the plugin's
+own harness with the plugin's output as the soundtrack.
+
 Put it on a speech or vocal channel. When the talker leans into the microphone and the low
 end swells, Proximate takes the swell off again: a first-order low shelf that deepens as
 they get closer and comes back off as they step away, so the voice keeps the same tonal

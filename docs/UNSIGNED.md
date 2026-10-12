@@ -62,7 +62,7 @@ it keeps happening.
 
 ## Linux
 
-No signing gate. Make the binary executable if you took the tarball:
+No signing gate. Make the binary executable if you took the `.zip`:
 
 ```sh
 chmod +x ./Standalone/Proximate
@@ -86,7 +86,7 @@ certificate is trusted immediately. Neither is free.
 ## Verifying a download
 
 Signing proves *who* built it; a checksum proves you got *what they built* — worth doing
-even unsigned. Compare against the release notes:
+even unsigned. Compare against the SHA-256 shown beside each file on the release page:
 
 ```sh
 shasum -a 256 <file>        # macOS / Linux

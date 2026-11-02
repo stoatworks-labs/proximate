@@ -67,9 +67,11 @@ or build it from source with CMake (see the README).
   `~/Library/Audio/Plug-Ins/`. The builds are Developer ID-signed and notarised, so there's no
   quarantine step.
 - **Windows:** the installer drops the VST3 into `C:\Program Files\Common Files\VST3\`, which
-  every host scans. The `.zip` is the same bundle plus the standalone, without the installer.
-  The Windows builds are unsigned, so see [UNSIGNED.md](UNSIGNED.md) for the one-time
-  SmartScreen click-through.
+  every host scans, and the standalone into `C:\Program Files\Proximate\`. The v0.1.0
+  installer put the VST3 in `C:\Program Files\Proximate\VST3\` instead, where no host looks:
+  move it across by hand, or run a newer installer, which clears that copy away. The `.zip` is
+  the same bundle plus the standalone, without the installer. The Windows builds are unsigned,
+  so see [UNSIGNED.md](UNSIGNED.md) for the one-time SmartScreen click-through.
 - **Linux:** the `.deb` and `.rpm` install the VST3 to `/usr/lib/vst3/`. The `.zip` holds the
   bundle and the standalone binary.
 

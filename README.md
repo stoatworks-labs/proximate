@@ -9,6 +9,8 @@
 
 One knob against the proximity effect. VST3, AU and standalone, built with JUCE.
 
+The [project page](https://stoatworks-labs.com/software/proximate/) has the downloads, the [user guide](https://stoatworks-labs.com/software/proximate/guide/), the video and a demo you can click around in the browser.
+
 **Video:** [What it does, in 44 seconds](https://www.youtube.com/watch?v=VNhoTlwiVx4): the
 actual editor over a presenter who leans in and steps back, rendered from the plugin's own
 harness with the plugin's output as the soundtrack.
